@@ -5,17 +5,43 @@ using UnityEngine;
 public class ProceduralCube : MonoBehaviour
 {
 
-    static Vector3[] verts = new Vector3[8]
+    static Vector3[] verts = new Vector3[24]
     {
+        //Front face
         new Vector3(-0.5f,  0.5f, 0.5f),
         new Vector3(-0.5f, -0.5f, 0.5f),
         new Vector3( 0.5f,  0.5f, 0.5f),
         new Vector3( 0.5f, -0.5f, 0.5f),
-
+        
+        //Back face
         new Vector3(-0.5f,  0.5f, -0.5f),
         new Vector3(-0.5f, -0.5f, -0.5f),
         new Vector3( 0.5f,  0.5f, -0.5f),
         new Vector3( 0.5f, -0.5f, -0.5f),
+
+        //Left face
+        new Vector3(-0.5f,  0.5f, -0.5f),
+        new Vector3(-0.5f, -0.5f, -0.5f),
+        new Vector3(-0.5f,  0.5f, 0.5f),
+        new Vector3(-0.5f, -0.5f, 0.5f),
+
+        //Right face
+        new Vector3(0.5f,  0.5f, -0.5f),
+        new Vector3(0.5f, -0.5f, -0.5f),
+        new Vector3(0.5f,  0.5f, 0.5f),
+        new Vector3(0.5f, -0.5f, 0.5f),
+        
+        //Top face
+        new Vector3(-0.5f,  0.5f, -0.5f),
+        new Vector3( 0.5f,  0.5f, -0.5f),
+        new Vector3(-0.5f,  0.5f,  0.5f),
+        new Vector3( 0.5f,  0.5f,  0.5f),
+
+        //Bottom face
+        new Vector3(-0.5f,  -0.5f,  -0.5f),
+        new Vector3( 0.5f,  -0.5f,  -0.5f),
+        new Vector3(-0.5f,  -0.5f,   0.5f),
+        new Vector3( 0.5f,  -0.5f,   0.5f),
     };
 
     static int[] indices = new int[36]
@@ -23,26 +49,26 @@ public class ProceduralCube : MonoBehaviour
         //Front face
         1,3,0,
         2,0,3,
-
-        //Left face
-        4,5,1,
-        0,4,1,
-            
-        //Back face
+        
+        //Front face
         4,7,5,
         7,4,6,
+        
+        //Left face
+        9,11,8,
+        10,8,11,
             
         //Right face
-        3,7,6,
-        3,6,2,
-
+        12,15,13,
+        15,12,14,
+        
         //Top face
-        4,0,2,
-        6,4,2,
-
+        16,19,17,
+        19,16,18,
+        
         //Bottom face
-        3,1,5,
-        3,5,7
+        21,23,20,
+        22,20,23
     };
 
     /// <summary>
@@ -53,9 +79,11 @@ public class ProceduralCube : MonoBehaviour
     public static ProceduralCube Create(Vector3 location = default, Vector3 size = default)
     {
         GameObject cube = new GameObject("Procedural Cube");
+        Material mat = Instantiate(Resources.Load<Material>("DefaultMaterial"));
         ProceduralCube proc = cube.AddComponent<ProceduralCube>();
         MeshFilter filter = cube.AddComponent<MeshFilter>();
         MeshRenderer renderer = cube.AddComponent<MeshRenderer>();
+        renderer.material = mat;
         Mesh mesh = new Mesh();
 
         if (size == default)
@@ -72,6 +100,8 @@ public class ProceduralCube : MonoBehaviour
 
         mesh.RecalculateNormals();
         mesh.RecalculateTangents();
+
+        mesh.UploadMeshData(false);
 
         filter.mesh = mesh;
         return proc;
