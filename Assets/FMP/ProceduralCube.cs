@@ -1,11 +1,13 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class ProceduralCube : MonoBehaviour
 {
-
-    static Vector3[] verts = new Vector3[24]
+    //Static vertex and triangle information to be accessed by all procedural cubes on creation
+    //Faces each have seperate vertices so that normals can be generated properly
+    //TODO: Uvs
+    static readonly Vector3[] Vertices = new Vector3[24]
     {
         //Front face
         new Vector3(-0.5f,  0.5f, 0.5f),
@@ -43,8 +45,7 @@ public class ProceduralCube : MonoBehaviour
         new Vector3(-0.5f,  -0.5f,   0.5f),
         new Vector3( 0.5f,  -0.5f,   0.5f),
     };
-
-    static int[] indices = new int[36]
+    static readonly int[] Indices = new int[36]
     {
         //Front face
         1,3,0,
@@ -71,6 +72,12 @@ public class ProceduralCube : MonoBehaviour
         22,20,23
     };
 
+
+    void Update()
+    {
+        transform.position = Grid.Snap(transform.position);
+    }
+
     /// <summary>
     /// Spawns a procedural cube
     /// </summary>
@@ -90,13 +97,13 @@ public class ProceduralCube : MonoBehaviour
             size = Vector3.one;
 
         List<Vector3> vertices = new List<Vector3>();
-        foreach (var vert in verts)
+        foreach (var vertex in Vertices)
         {
-            vertices.Add(new Vector3(vert.x * size.x, vert.y * size.y, vert.z * size.z));
+            vertices.Add(new Vector3(vertex.x * size.x, vertex.y * size.y, vertex.z * size.z));
         }
 
         mesh.vertices = vertices.ToArray();
-        mesh.triangles = indices;
+        mesh.triangles = Indices;
 
         mesh.RecalculateNormals();
         mesh.RecalculateTangents();

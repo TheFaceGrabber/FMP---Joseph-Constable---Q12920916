@@ -2,11 +2,17 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[ExecuteInEditMode]
 public class ProceduralCubeCreationTest : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    public bool Create;
+
+    void Update()
     {
-        ProceduralCube.Create();
+        if (Create)
+        {
+            ProceduralCube.Create();
+            Create = false;
+        }
     }
 }
