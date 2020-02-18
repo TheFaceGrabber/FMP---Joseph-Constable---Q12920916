@@ -6,6 +6,7 @@ using UnityEngine;
 public class ProceduralCubeCreationTest : MonoBehaviour
 {
     public bool Create;
+    public float GridSize = 1;
 
     void Update()
     {
@@ -14,5 +15,7 @@ public class ProceduralCubeCreationTest : MonoBehaviour
             ProceduralCube.Create();
             Create = false;
         }
+
+        Grid.SetGridSize(GridSize);
     }
 }

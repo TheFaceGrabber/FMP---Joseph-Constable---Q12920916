@@ -16,16 +16,16 @@ public static class Grid
 
     public static Vector2 Snap(Vector2 f)
     {
-        return new Vector2(Mathf.Round(f.x), Mathf.Round(f.y));
+        return new Vector2(Mathf.Round(f.x / GridSize) * GridSize, Mathf.Round(f.y / GridSize) * GridSize);
     }
 
     public static Vector3 Snap(Vector3 f)
     {
-        return new Vector3(Mathf.Round(f.x), Mathf.Round(f.y), Mathf.Round(f.z));
+        return new Vector3(Mathf.Round(f.x / GridSize) * GridSize, Mathf.Round(f.y / GridSize) * GridSize, Mathf.Round(f.z / GridSize) * GridSize);
     }
 
     public static Vector4 Snap(Vector4 f)
     {
-        return new Vector4(Mathf.Round(f.x), Mathf.Round(f.y), Mathf.Round(f.z), Mathf.Round(f.w));
+        return new Vector4(Mathf.Round(f.x / GridSize) * GridSize, Mathf.Round(f.y / GridSize) * GridSize, Mathf.Round(f.z / GridSize) * GridSize, Mathf.Round(f.w / GridSize) * GridSize);
     }
 }
