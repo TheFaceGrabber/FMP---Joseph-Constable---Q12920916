@@ -2,7 +2,7 @@
 
 public static class Grid
 {
-    public static float GridSize { get; private set; } = 1;
+    public static float GridSize { get; private set; }
 
     public static void SetGridSize(float size)
     {

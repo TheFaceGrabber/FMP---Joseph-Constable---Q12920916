@@ -83,7 +83,7 @@ public class ProceduralCube : MonoBehaviour
     /// </summary>
     /// <param name="location">Where in the world to spawn the cube</param>
     /// <param name="size">The size of the cube (default is 1x1x1)</param>
-    public static ProceduralCube Create(Vector3 location = default, Vector3 size = default)
+    public static ProceduralCube Create(Vector3 location, Vector3 size)
     {
         GameObject cube = new GameObject("Procedural Cube");
         Material mat = Instantiate(Resources.Load<Material>("DefaultMaterial"));
@@ -92,10 +92,7 @@ public class ProceduralCube : MonoBehaviour
         MeshRenderer renderer = cube.AddComponent<MeshRenderer>();
         renderer.material = mat;
         Mesh mesh = new Mesh();
-
-        if (size == default)
-            size = Vector3.one;
-
+        
         List<Vector3> vertices = new List<Vector3>();
         foreach (var vertex in Vertices)
         {
@@ -106,7 +103,7 @@ public class ProceduralCube : MonoBehaviour
         mesh.triangles = Indices;
 
         mesh.RecalculateNormals();
-        mesh.RecalculateTangents();
+        //mesh.RecalculateTangents();
 
         mesh.UploadMeshData(false);
 
