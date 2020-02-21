@@ -28,4 +28,9 @@ public static class Grid
     {
         return new Vector4(Mathf.Round(f.x / GridSize) * GridSize, Mathf.Round(f.y / GridSize) * GridSize, Mathf.Round(f.z / GridSize) * GridSize, Mathf.Round(f.w / GridSize) * GridSize);
     }
+
+    public static Vector3 SnapSize(Vector3 f)
+    {
+        return new Vector3(Mathf.Ceil(f.x / GridSize) * GridSize, Mathf.Ceil(f.y / GridSize) * GridSize, Mathf.Ceil(f.z / GridSize) * GridSize);
+    }
 }

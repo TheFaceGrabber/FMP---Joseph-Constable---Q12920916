@@ -94,6 +94,8 @@ public class ProceduralCube : MonoBehaviour
         Mesh mesh = new Mesh();
         
         List<Vector3> vertices = new List<Vector3>();
+        Debug.Log($"Passed in {size} - converted to {Grid.SnapSize(size)} as per grid size of {Grid.GridSize}");
+        size = Grid.SnapSize(size);
         foreach (var vertex in Vertices)
         {
             vertices.Add(new Vector3(vertex.x * size.x, vertex.y * size.y, vertex.z * size.z));
