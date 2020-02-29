@@ -53,6 +53,8 @@ enum cameraDirection{
 		viewCamera.clearFlags = CameraClearFlags.SolidColor;
 		viewCamera.orthographic = true;
 
+		UpdateViewDirection();
+
 		DestroyRenderTexture();
 		CreateRenderTexture();
 	}
@@ -131,6 +133,5 @@ enum cameraDirection{
 		viewCamera.Render();
 		GL.wireframe = false;
 		GUI.DrawTexture(new Rect(0, 0, position.width, position.height), renderTexture);
-		//EditorGUI.DrawPreviewTexture(new Rect(0, 0, position.width, position.height), renderTexture);
 	}
 }
