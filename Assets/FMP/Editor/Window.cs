@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEditor;
 
 public class Window : EditorWindow
@@ -44,7 +45,6 @@ public class Window : EditorWindow
 		renderTexture = new RenderTexture((int)position.width, (int)position.height, 16);
 		lastSize = new Vector2(position.width, position.height);
 		viewCamera.targetTexture = renderTexture;
-		Debug.Log("Resized to: " + lastSize);
 	}
 
 	void Resize()
@@ -52,11 +52,12 @@ public class Window : EditorWindow
 		DestroyRenderTexture();
 		CreateRenderTexture();
 
-        gridPlane.transform.localScale = new Vector3(position.width / position.height, 1, 1);
 	}
 
 	void Awake()
-	{
+    {
+        Grid.SetGridSize(1);
+        wantsMouseMove = true;
 		GameObject cam = new GameObject("cam");
 		cam.hideFlags = HideFlags.HideAndDontSave | HideFlags.DontSave;
 		viewCamera = cam.AddComponent<Camera>();
@@ -71,7 +72,7 @@ public class Window : EditorWindow
         gridPlane.transform.localEulerAngles = new Vector3(-90,0,0);
 		gridPlane.hideFlags = HideFlags.HideAndDontSave | HideFlags.DontSave;
 		gridPlane.GetComponent<MeshRenderer>().material = Resources.Load<Material>("GridMaterial");
-        gridMaterial = gridPlane.GetComponent<MeshRenderer>().material;
+        gridMaterial = gridPlane.GetComponent<MeshRenderer>().sharedMaterial;
 
 		UpdateViewDirection();
 
@@ -124,43 +125,101 @@ public class Window : EditorWindow
         }
     }
 
+    Vector3 GetMoveDirection(Vector2 delta)
+    {
+        switch (currentCamDirection)
+        {
+            case cameraDirection.Top:
+                return new Vector3(-Event.current.delta.x, 0, Event.current.delta.y) * 0.01f;
+            case cameraDirection.Left:
+                return new Vector3(0, Event.current.delta.y, -Event.current.delta.x) * 0.01f;
+			case cameraDirection.Right:
+                return new Vector3(0, Event.current.delta.y, Event.current.delta.x) * 0.01f;
+			case cameraDirection.Front:
+                return new Vector3(-Event.current.delta.x, Event.current.delta.y, 0) * 0.01f;
+			case cameraDirection.Back:
+                return new Vector3(Event.current.delta.x, Event.current.delta.y, 0) * 0.01f;
+			default:
+				return Vector3.zero;
+        }
+    }
+
     void OnGUI()
-	{	//Check for window resizing and update rendertexture accordingly.
+	{
+        //Check for window resizing and update rendertexture accordingly.
 		if(position.width != lastSize.x || position.height != lastSize.y)
 		{
 			Resize();
 		}
 
 		//Get Input
-		if(Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Tab)
+		if(Event.current.type == EventType.KeyDown)
 		{
-			switch(currentCamDirection)
-			{
-				case cameraDirection.Top:
-				currentCamDirection = cameraDirection.Left;
-				break;
-				case cameraDirection.Left:
-				currentCamDirection = cameraDirection.Right;
-				break;
-				case cameraDirection.Right:
-				currentCamDirection = cameraDirection.Front;
-				break;
-				case cameraDirection.Front:
-				currentCamDirection = cameraDirection.Back;
-				break;
-				case cameraDirection.Back:
-				currentCamDirection = cameraDirection.Top;
-				break;
-			}
-			UpdateViewDirection();
-			ShowNotification(new GUIContent(currentCamDirection.ToString()));
+            if (Event.current.keyCode == KeyCode.Tab)
+            {
+                switch (currentCamDirection)
+                {
+                    case cameraDirection.Top:
+                        currentCamDirection = cameraDirection.Left;
+                        break;
+                    case cameraDirection.Left:
+                        currentCamDirection = cameraDirection.Right;
+                        break;
+                    case cameraDirection.Right:
+                        currentCamDirection = cameraDirection.Front;
+                        break;
+                    case cameraDirection.Front:
+                        currentCamDirection = cameraDirection.Back;
+                        break;
+                    case cameraDirection.Back:
+                        currentCamDirection = cameraDirection.Top;
+                        break;
+                }
+
+                UpdateViewDirection();
+                ShowNotification(new GUIContent(currentCamDirection.ToString()));
+            }
+            else if (Event.current.keyCode == KeyCode.Equals)
+            {
+                Grid.SetGridSize(Grid.GridSize * 2);
+                ShowNotification(new GUIContent(Grid.GridSize.ToString()));
+                Repaint();
+            }
+            else if (Event.current.keyCode == KeyCode.Minus)
+            {
+                Grid.SetGridSize(Grid.GridSize / 2);
+                ShowNotification(new GUIContent(Grid.GridSize.ToString()));
+                Repaint();
+            }
+        } 
+
+		if (Event.current.type == EventType.MouseDrag && Event.current.button == 2)
+        {
+            viewCamera.transform.position += GetMoveDirection(Event.current.delta) * (viewCamera.orthographicSize / 5);
+			Repaint();
+        }
+
+        if (Event.current.type == EventType.ScrollWheel)
+        {
+            var d = Event.current.delta.y;
+            viewCamera.orthographicSize += d / 5;
+            viewCamera.orthographicSize = Mathf.Clamp(viewCamera.orthographicSize, 1, 100);
+
+			Repaint();
 		}
 
-		gridPlane.SetActive(true);
+        if (Event.current.type == EventType.Repaint)
+		{
+			gridPlane.transform.localScale = new Vector3(position.width / position.height, 1, 1);
+			gridPlane.transform.localScale *= (viewCamera.orthographicSize / 5f);
 
-		gridMaterial.SetFloat("_GridSize", Grid.GridSize);
-		viewCamera.Render();
-		gridPlane.SetActive(false);
+			gridPlane.SetActive(true);
+
+            gridMaterial.SetFloat("_GridSize", Grid.GridSize);
+            viewCamera.Render();
+            gridPlane.SetActive(false);
+		}
+
 		GUI.DrawTexture(new Rect(0, 0, position.width, position.height), renderTexture);
 	}
 }
