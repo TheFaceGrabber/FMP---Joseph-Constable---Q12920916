@@ -10,40 +10,40 @@ public class ProceduralCube : MonoBehaviour
     static readonly Vector3[] Vertices = new Vector3[24]
     {
         //Front face
-        new Vector3(-0.5f,  0.5f, 0.5f),
-        new Vector3(-0.5f, -0.5f, 0.5f),
-        new Vector3( 0.5f,  0.5f, 0.5f),
-        new Vector3( 0.5f, -0.5f, 0.5f),
+        new Vector3(0,  1f, 1f),
+        new Vector3(0, 0, 1f),
+        new Vector3( 1f,  1f, 1f),
+        new Vector3( 1f, 0, 1f),
         
         //Back face
-        new Vector3(-0.5f,  0.5f, -0.5f),
-        new Vector3(-0.5f, -0.5f, -0.5f),
-        new Vector3( 0.5f,  0.5f, -0.5f),
-        new Vector3( 0.5f, -0.5f, -0.5f),
+        new Vector3(0,  1f, 0),
+        new Vector3(0, 0, 0),
+        new Vector3( 1f,  1f, 0),
+        new Vector3( 1f, 0, 0),
 
         //Left face
-        new Vector3(-0.5f,  0.5f, -0.5f),
-        new Vector3(-0.5f, -0.5f, -0.5f),
-        new Vector3(-0.5f,  0.5f, 0.5f),
-        new Vector3(-0.5f, -0.5f, 0.5f),
+        new Vector3(0,  1f, 0),
+        new Vector3(0, 0, 0),
+        new Vector3(0,  1f, 1f),
+        new Vector3(0, 0, 1f),
 
         //Right face
-        new Vector3(0.5f,  0.5f, -0.5f),
-        new Vector3(0.5f, -0.5f, -0.5f),
-        new Vector3(0.5f,  0.5f, 0.5f),
-        new Vector3(0.5f, -0.5f, 0.5f),
+        new Vector3(1f,  1f, 0),
+        new Vector3(1f, 0, 0),
+        new Vector3(1f,  1f, 1f),
+        new Vector3(1f, 0, 1f),
         
         //Top face
-        new Vector3(-0.5f,  0.5f, -0.5f),
-        new Vector3( 0.5f,  0.5f, -0.5f),
-        new Vector3(-0.5f,  0.5f,  0.5f),
-        new Vector3( 0.5f,  0.5f,  0.5f),
+        new Vector3(0,  1f, 0),
+        new Vector3( 1f,  1f, 0),
+        new Vector3(0,  1f,  1f),
+        new Vector3( 1f,  1f,  1f),
 
         //Bottom face
-        new Vector3(-0.5f,  -0.5f,  -0.5f),
-        new Vector3( 0.5f,  -0.5f,  -0.5f),
-        new Vector3(-0.5f,  -0.5f,   0.5f),
-        new Vector3( 0.5f,  -0.5f,   0.5f),
+        new Vector3(0,  0,  0),
+        new Vector3( 1f,  0,  0),
+        new Vector3(0,  0,   1f),
+        new Vector3( 1f,  0,   1f),
     };
     static readonly int[] Indices = new int[36]
     {
@@ -75,7 +75,7 @@ public class ProceduralCube : MonoBehaviour
 
     void Update()
     {
-        transform.position = Grid.Snap(transform.position);
+       // transform.position = Grid.Snap(transform.position);
     }
 
     /// <summary>
@@ -86,6 +86,7 @@ public class ProceduralCube : MonoBehaviour
     public static ProceduralCube Create(Vector3 location, Vector3 size)
     {
         GameObject cube = new GameObject("Procedural Cube");
+        cube.transform.position = Grid.Snap(location);
         Material mat = Instantiate(Resources.Load<Material>("DefaultMaterial"));
         ProceduralCube proc = cube.AddComponent<ProceduralCube>();
         MeshFilter filter = cube.AddComponent<MeshFilter>();
@@ -94,7 +95,6 @@ public class ProceduralCube : MonoBehaviour
         Mesh mesh = new Mesh();
         
         List<Vector3> vertices = new List<Vector3>();
-        Debug.Log($"Passed in {size} - converted to {Grid.SnapSize(size)} as per grid size of {Grid.GridSize}");
         size = Grid.SnapSize(size);
         foreach (var vertex in Vertices)
         {
@@ -105,11 +105,11 @@ public class ProceduralCube : MonoBehaviour
         mesh.triangles = Indices;
 
         mesh.RecalculateNormals();
-        //mesh.RecalculateTangents();
 
         mesh.UploadMeshData(false);
 
         filter.mesh = mesh;
+
         return proc;
     }
 }

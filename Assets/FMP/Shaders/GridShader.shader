@@ -67,7 +67,7 @@
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-				fixed grid = DrawGrid(i.uv + float2(0.5,0.5), _GridSize, 0.03);
+				fixed grid = DrawGrid(i.uv, _GridSize, 0.03);
 				return float4(grid, grid, grid, grid);
 			}
 			ENDCG

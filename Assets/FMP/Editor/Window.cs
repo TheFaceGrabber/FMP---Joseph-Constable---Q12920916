@@ -144,6 +144,25 @@ public class Window : EditorWindow
         }
     }
 
+    Vector3 ConvertToCameraRelative(Vector3 pos)
+    {
+        switch (currentCamDirection)
+        {
+            case cameraDirection.Top:
+                return new Vector3(pos.x, 0, pos.z);
+            case cameraDirection.Left:
+                return new Vector3(0, pos.y, pos.z);
+            case cameraDirection.Right:
+                return new Vector3(0, pos.y, pos.z);
+            case cameraDirection.Front:
+                return new Vector3(pos.x, pos.y, 0);
+            case cameraDirection.Back:
+                return new Vector3(pos.x, pos.y, 0);
+            default:
+                return pos;
+        }
+    }
+
     void OnGUI()
 	{
         //Check for window resizing and update rendertexture accordingly.
@@ -181,13 +200,21 @@ public class Window : EditorWindow
             }
             else if (Event.current.keyCode == KeyCode.Equals)
             {
-                Grid.SetGridSize(Grid.GridSize * 2);
+                if (Grid.GridSize < 64)
+                {
+                    Grid.SetGridSize(Grid.GridSize * 2);
+                }
+
                 ShowNotification(new GUIContent(Grid.GridSize.ToString()));
                 Repaint();
             }
             else if (Event.current.keyCode == KeyCode.Minus)
             {
-                Grid.SetGridSize(Grid.GridSize / 2);
+                if (Grid.GridSize > 0.0625)
+                {
+                    Grid.SetGridSize(Grid.GridSize / 2);
+                }
+
                 ShowNotification(new GUIContent(Grid.GridSize.ToString()));
                 Repaint();
             }
@@ -199,11 +226,22 @@ public class Window : EditorWindow
 			Repaint();
         }
 
+        if (Event.current.type == EventType.MouseDown && Event.current.button == 0)
+        {
+            var mousePos = Event.current.mousePosition;
+            mousePos.y = viewCamera.pixelHeight - Event.current.mousePosition.y;
+
+            var pos = ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mousePos));
+
+            if(ProceduralCube.Create(pos, Grid.GridSize * Vector3.one) != null)
+                Repaint();
+        }
+
         if (Event.current.type == EventType.ScrollWheel)
         {
             var d = Event.current.delta.y;
             viewCamera.orthographicSize += d / 5;
-            viewCamera.orthographicSize = Mathf.Clamp(viewCamera.orthographicSize, 1, 100);
+            viewCamera.orthographicSize = Mathf.Clamp(viewCamera.orthographicSize, .5f, 100);
 
 			Repaint();
 		}
