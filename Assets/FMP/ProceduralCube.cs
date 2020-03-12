@@ -4,6 +4,7 @@ using UnityEngine;
 [ExecuteInEditMode]
 public class ProceduralCube : MonoBehaviour
 {
+    #region Statics
     //Static vertex and triangle information to be accessed by all procedural cubes on creation
     //Faces each have seperate vertices so that normals can be generated properly
     //TODO: Uvs
@@ -72,12 +73,6 @@ public class ProceduralCube : MonoBehaviour
         22,20,23
     };
 
-
-    void Update()
-    {
-       // transform.position = Grid.Snap(transform.position);
-    }
-
     /// <summary>
     /// Spawns a procedural cube
     /// </summary>
@@ -112,4 +107,8 @@ public class ProceduralCube : MonoBehaviour
 
         return proc;
     }
+
+    #endregion
+
+
 }
