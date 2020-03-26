@@ -46,6 +46,7 @@ public class ProceduralCube : MonoBehaviour
         new Vector3(0,  0,   1f),
         new Vector3( 1f,  0,   1f),
     };
+
     static readonly int[] Indices = new int[36]
     {
         //Front face
@@ -84,31 +85,81 @@ public class ProceduralCube : MonoBehaviour
         cube.transform.position = Grid.Snap(location);
         Material mat = Instantiate(Resources.Load<Material>("DefaultMaterial"));
         ProceduralCube proc = cube.AddComponent<ProceduralCube>();
+        proc.EndPosition = cube.transform.position + size;
         MeshFilter filter = cube.AddComponent<MeshFilter>();
         MeshRenderer renderer = cube.AddComponent<MeshRenderer>();
         renderer.material = mat;
-        Mesh mesh = new Mesh();
-        
-        List<Vector3> vertices = new List<Vector3>();
-        size = Grid.SnapSize(size);
-        foreach (var vertex in Vertices)
-        {
-            vertices.Add(new Vector3(vertex.x * size.x, vertex.y * size.y, vertex.z * size.z));
-        }
 
-        mesh.vertices = vertices.ToArray();
-        mesh.triangles = Indices;
+        cube.AddComponent<BoxCollider>();
 
-        mesh.RecalculateNormals();
+        proc.UpdateMesh();
 
-        mesh.UploadMeshData(false);
-
-        filter.mesh = mesh;
 
         return proc;
     }
 
     #endregion
 
+    public Vector3 EndPosition { get; set; }
 
+    public void UpdateMesh()
+    {
+        MeshFilter filter = GetComponent<MeshFilter>();
+        Mesh mesh = new Mesh();
+
+        List<Vector3> vertices = new List<Vector3>();
+        List<Vector2> uvs = new List<Vector2>();
+        EndPosition = Grid.SnapSize(EndPosition);
+
+        var size = EndPosition - transform.position;
+
+        foreach (var vertex in Vertices)
+        {
+            vertices.Add(new Vector3(vertex.x * size.x, vertex.y * size.y, vertex.z * size.z));
+        }
+
+        mesh.vertices = vertices.ToArray();
+
+        for (int i = 0; i < vertices.Count; i+=4)
+        {
+            var v1 = vertices[i];
+            var v2 = vertices[i + 1];
+            var v3 = vertices[i + 2];
+            var v4 = vertices[i + 3];
+
+            if (v1.z == v2.z && v1.z == v3.z && v1.z == v4.z)
+            {
+                uvs.Add(new Vector2(v1.x,v1.y));
+                uvs.Add(new Vector2(v2.x, v2.y));
+                uvs.Add(new Vector2(v3.x, v3.y));
+                uvs.Add(new Vector2(v4.x, v4.y));
+            }
+            else if (v1.y == v2.y && v1.y == v3.y && v1.y == v4.y)
+            {
+                uvs.Add(new Vector2(v1.x, v1.z));
+                uvs.Add(new Vector2(v2.x, v2.z));
+                uvs.Add(new Vector2(v3.x, v3.z));
+                uvs.Add(new Vector2(v4.x, v4.z));
+            }
+            else if (v1.x == v2.x && v1.x == v3.x && v1.x == v4.x)
+            {
+                uvs.Add(new Vector2(v3.y, v3.z));
+                uvs.Add(new Vector2(v4.y, v4.z));
+                uvs.Add(new Vector2(v1.y, v1.z));
+                uvs.Add(new Vector2(v2.y, v2.z));
+            }
+        }
+
+        mesh.triangles = Indices;
+        mesh.uv = uvs.ToArray();
+
+        mesh.RecalculateNormals();
+
+        mesh.UploadMeshData(false);
+
+        GetComponent<BoxCollider>().center = size / 2;
+        GetComponent<BoxCollider>().size = size;
+
+        filter.mesh = mesh;
+    }
 }

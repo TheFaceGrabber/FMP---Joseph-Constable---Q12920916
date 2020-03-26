@@ -1,4 +1,4 @@
-﻿Shader "Unlit/GridShader"
+﻿Shader "Hidden/FMP/GridShader"
 {
 	Properties
 	{
