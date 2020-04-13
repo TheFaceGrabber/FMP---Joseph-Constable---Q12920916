@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [ExecuteInEditMode]
 public class ProceduralCube : MonoBehaviour
@@ -79,10 +80,10 @@ public class ProceduralCube : MonoBehaviour
     /// </summary>
     /// <param name="location">Where in the world to spawn the cube</param>
     /// <param name="size">The size of the cube (default is 1x1x1)</param>
-    public static ProceduralCube Create(Vector3 location, Vector3 size)
+    public static ProceduralCube Create(Vector3 location, Vector3 size, float gridSize)
     {
         GameObject cube = new GameObject("Procedural Cube");
-        cube.transform.position = Grid.Snap(location);
+        cube.transform.position = Grid.Snap(location, gridSize);
         Material mat = Instantiate(Resources.Load<Material>("DefaultMaterial"));
         ProceduralCube proc = cube.AddComponent<ProceduralCube>();
         proc.EndPosition = cube.transform.position + size;
@@ -92,24 +93,24 @@ public class ProceduralCube : MonoBehaviour
 
         cube.AddComponent<BoxCollider>();
 
-        proc.UpdateMesh();
-
+        proc.UpdateMesh(gridSize);
 
         return proc;
     }
 
     #endregion
 
-    public Vector3 EndPosition { get; set; }
+    [HideInInspector]
+    public Vector3 EndPosition;
 
-    public void UpdateMesh()
+    public void UpdateMesh(float gridSize)
     {
         MeshFilter filter = GetComponent<MeshFilter>();
         Mesh mesh = new Mesh();
 
         List<Vector3> vertices = new List<Vector3>();
         List<Vector2> uvs = new List<Vector2>();
-        EndPosition = Grid.SnapSize(EndPosition);
+        EndPosition = Grid.SnapSize(EndPosition, gridSize);
 
         var size = EndPosition - transform.position;
 

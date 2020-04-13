@@ -4,9 +4,14 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 
 public class Window : EditorWindow
 {
+    private const string camName = "fmp_window_camera";
+    private const string gridName = "fmp_window_grid";
+
     enum cameraDirection
     {
         Top,
@@ -24,6 +29,7 @@ public class Window : EditorWindow
 
     /*Window manipulation*/
 	bool wireFrame;
+    private float gridSize = 1;
 
 	/*Rendering*/
     RenderTexture renderTexture;
@@ -75,34 +81,80 @@ public class Window : EditorWindow
 
 	void Awake()
     {
-        Grid.SetGridSize(1);
         wantsMouseMove = true;
-		GameObject cam = new GameObject("cam");
-		cam.hideFlags = HideFlags.HideAndDontSave | HideFlags.DontSave;
-		viewCamera = cam.AddComponent<Camera>();
-        viewCamera.farClipPlane = 5000;
-        viewCamera.backgroundColor = Color.black;
-		viewCamera.clearFlags = CameraClearFlags.SolidColor;
-		viewCamera.orthographic = true;
+        wantsMouseEnterLeaveWindow = true;
 
-        gridPlane = GameObject.CreatePrimitive(PrimitiveType.Plane);
-        gridPlane.transform.parent = viewCamera.transform;
-        gridPlane.transform.localPosition = new Vector3(0, 0, 1000);
-        gridPlane.transform.localEulerAngles = new Vector3(-90,0,0);
-		gridPlane.hideFlags = HideFlags.HideAndDontSave | HideFlags.DontSave;
-		gridPlane.GetComponent<MeshRenderer>().material = Resources.Load<Material>("GridMaterial");
-        gridPlane.SetActive(false);
-        gridMaterial = gridPlane.GetComponent<MeshRenderer>().sharedMaterial;
+        GetSceneResources();
 
         replacementShader = Shader.Find("Hidden/FMP/SelectedObject");
         effectMaterial = new Material(Shader.Find("Hidden/FMP/SelectionEffect"));
-
 
         UpdateViewDirection();
 
 		DestroyRenderTexture();
 		CreateRenderTexture();
 	}
+
+    void GetSceneResources()
+    {
+        bool hadToCreate = false;
+
+        if (viewCamera == null)
+        {
+            hadToCreate = true;
+            if (!GameObject.Find(camName))
+            {
+                CreateCamera();
+            }
+            else
+            {
+                viewCamera = GameObject.Find(camName).GetComponent<Camera>();
+            }
+        }
+
+        if (gridPlane == null)
+        {
+            hadToCreate = true;
+            if (!GameObject.Find(gridName))
+            {
+                CreateGrid();
+            }
+            else
+            {
+                gridPlane = GameObject.Find(gridName);
+            }
+        }
+
+        if (hadToCreate)
+        {
+            Resize();
+            UpdateViewDirection();
+        }
+    }
+
+    void CreateGrid()
+    {
+        gridPlane = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        gridPlane.name = gridName;
+        gridPlane.transform.parent = viewCamera.transform;
+        gridPlane.transform.localPosition = new Vector3(0, 0, 1000);
+        gridPlane.transform.localEulerAngles = new Vector3(-90, 0, 0);
+        gridPlane.hideFlags = HideFlags.HideInHierarchy;
+        gridPlane.GetComponent<MeshRenderer>().material = Resources.Load<Material>("GridMaterial");
+        gridPlane.SetActive(false);
+        gridMaterial = gridPlane.GetComponent<MeshRenderer>().sharedMaterial;
+    }
+
+    void CreateCamera()
+    {
+        GameObject cam = new GameObject(camName);
+        cam.hideFlags = HideFlags.HideInHierarchy;
+        viewCamera = cam.AddComponent<Camera>();
+        viewCamera.farClipPlane = 5000;
+        viewCamera.backgroundColor = Color.black;
+        viewCamera.clearFlags = CameraClearFlags.SolidColor;
+        viewCamera.orthographic = true;
+    }
 
     void OnDestroy()
 	{
@@ -259,11 +311,19 @@ public class Window : EditorWindow
 
     void Update()
     {
+        if (viewCamera == null) return;
+
+        if (!position.Contains(new Vector2(mouseScreenPos.x, mouseScreenPos.y) + position.position))
+        {
+            wasMouseDragged = false;
+            return;
+        }
+
         mouseWorldPos = (ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mouseScreenPos)));
-        var snapped = Grid.Snap(mouseWorldPos);
+        var snapped = Grid.Snap(mouseWorldPos, gridSize);
         if (wasMouseDragged)
         {
-            var dragPos = Grid.Snap(ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mouseDragStartScreenPos)));
+            var dragPos = Grid.Snap(ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mouseDragStartScreenPos)), gridSize);
             if (Selection.activeGameObject != null)
             {
                 var cube = Selection.activeGameObject.GetComponent<ProceduralCube>();
@@ -273,7 +333,7 @@ public class Window : EditorWindow
                     {
                         var size = cube.EndPosition - cube.transform.position;
 
-                        Vector3 trans = Grid.Snap(ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mouseDragStartScreenPos + mouseDragDelta))) - dragPos;
+                        Vector3 trans = Grid.Snap(ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mouseDragStartScreenPos + mouseDragDelta)), gridSize) - dragPos;
                         lastMouseDragStartScreenPos = mouseDragStartScreenPos;
                         mouseDragStartScreenPos = mouseScreenPos;
 
@@ -288,7 +348,7 @@ public class Window : EditorWindow
                         var endPos = cube.EndPosition;
                         var size = cube.EndPosition - cube.transform.position;
 
-                        Vector3 trans = Grid.Snap(ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mouseDragStartScreenPos + mouseDragDelta))) - dragPos;
+                        Vector3 trans = Grid.Snap(ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mouseDragStartScreenPos + mouseDragDelta)), gridSize) - dragPos;
                         lastMouseDragStartScreenPos = mouseDragStartScreenPos;
                         mouseDragStartScreenPos = mouseScreenPos;
 
@@ -321,17 +381,22 @@ public class Window : EditorWindow
                         {
                             cube.transform.position += new Vector3(0, trans.y, 0);
                         }
-                        cube.UpdateMesh();
+                        cube.UpdateMesh(gridSize);
+                        EditorUtility.SetDirty(cube);
                     }
+
+                    var scene = SceneManager.GetActiveScene();
+                    EditorSceneManager.MarkSceneDirty(scene);
                 }
             }
         }
     }
 
     void OnGUI()
-	{
+    {
+        GetSceneResources();
         //Check for window resizing and update rendertexture accordingly.
-		if(position.width != lastSize.x || position.height != lastSize.y)
+        if (position.width != lastSize.x || position.height != lastSize.y)
 		{
 			Resize();
         }
@@ -376,24 +441,54 @@ public class Window : EditorWindow
                 UpdateViewDirection();
                 ShowNotification(new GUIContent(currentCamDirection.ToString()));
             }
+            else if(Event.current.keyCode == KeyCode.A)
+            {
+                currentCamDirection = cameraDirection.Front;
+                UpdateViewDirection();
+                ShowNotification(new GUIContent(currentCamDirection.ToString()));
+            }
+            else if (Event.current.keyCode == KeyCode.D)
+            {
+                currentCamDirection = cameraDirection.Back;
+                UpdateViewDirection();
+                ShowNotification(new GUIContent(currentCamDirection.ToString()));
+            }
+            else if (Event.current.keyCode == KeyCode.E)
+            {
+                currentCamDirection = cameraDirection.Right;
+                UpdateViewDirection();
+                ShowNotification(new GUIContent(currentCamDirection.ToString()));
+            }
+            else if (Event.current.keyCode == KeyCode.Q)
+            {
+                currentCamDirection = cameraDirection.Left;
+                UpdateViewDirection();
+                ShowNotification(new GUIContent(currentCamDirection.ToString()));
+            }
+            else if (Event.current.keyCode == KeyCode.W)
+            {
+                currentCamDirection = cameraDirection.Top;
+                UpdateViewDirection();
+                ShowNotification(new GUIContent(currentCamDirection.ToString()));
+            }
             else if (Event.current.keyCode == KeyCode.Equals)
             {
-                if (Grid.GridSize < 64)
+                if (gridSize < 64)
                 {
-                    Grid.SetGridSize(Grid.GridSize * 2);
+                    gridSize = gridSize * 2;
                 }
 
-                ShowNotification(new GUIContent(Grid.GridSize.ToString()));
+                ShowNotification(new GUIContent(gridSize.ToString()));
                 Repaint();
             }
             else if (Event.current.keyCode == KeyCode.Minus)
             {
-                if (Grid.GridSize > 0.0625)
+                if (gridSize > 0.0625)
                 {
-                    Grid.SetGridSize(Grid.GridSize / 2);
+                    gridSize = gridSize / 2;
                 }
 
-                ShowNotification(new GUIContent(Grid.GridSize.ToString()));
+                ShowNotification(new GUIContent(gridSize.ToString()));
                 Repaint();
             }
             else if (Event.current.keyCode == KeyCode.Delete)
@@ -404,7 +499,7 @@ public class Window : EditorWindow
                 }
                 Repaint();
             }
-            else if (Event.current.keyCode == KeyCode.W)
+            else if (Event.current.keyCode == KeyCode.X)
                 wireFrame = !wireFrame;
         } 
 
@@ -468,8 +563,11 @@ public class Window : EditorWindow
             {
                 var pos = ConvertToCameraRelative(viewCamera.ScreenToWorldPoint(mouseScreenPos));
 
-                if (ProceduralCube.Create(pos, Grid.GridSize * Vector3.one) != null)
+                if (ProceduralCube.Create(pos, gridSize * Vector3.one, gridSize) != null)
                     Repaint();
+
+                var scene = SceneManager.GetActiveScene();
+                EditorSceneManager.MarkSceneDirty(scene);
             }
 
             mouseDragStartScreenPos = Vector3.zero;
@@ -486,12 +584,12 @@ public class Window : EditorWindow
 			Repaint();
 		}
 
-        if (Event.current.type == EventType.Repaint)
+        if (Event.current.type == EventType.Repaint) 
         {
             gridPlane.transform.localScale = new Vector3(position.width / position.height, 1, 1);
 			gridPlane.transform.localScale *= (viewCamera.orthographicSize / 5f);
 
-            gridMaterial.SetFloat("_GridSize", Grid.GridSize);
+            gridMaterial.SetFloat("_GridSize", gridSize);
 
             var clearFlags = viewCamera.clearFlags;
 
