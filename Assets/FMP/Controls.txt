@@ -1,0 +1,9 @@
+X: Toggle Wireframe
+
+Tab: Cycle between view directions
+
+W: Top view direction
+Q: Left view direction
+E: Right view direction
+A: Front view direction
+D: Back view direction
